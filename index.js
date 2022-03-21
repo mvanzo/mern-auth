@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3001
 
 // middleware
 app.use(cors())
-app.use(express.urlencoded({ extended: false }));       // body parser middleware for post requests n such
+// app.use(express.urlencoded({ extended: false }));       // body parser middleware for post requests n such - only need for html forms
 app.use(express.json())                                 // allows request bodies in json?
 
 app.get('/', (req, res)=> {
