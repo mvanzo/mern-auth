@@ -11,8 +11,12 @@ const PORT = process.env.PORT || 3001
 // middleware
 app.use(cors())
 // app.use(express.urlencoded({ extended: false }));       // body parser middleware for post requests n such - only need for html forms
-app.use(express.json())                                 // allows request bodies in json?
+app.use(express.json())                                    // allows request bodies in json?
 
+const myMiddleware = (req, res, next) => {
+    console.log(`incoming request: ${req.method} from the url: ${req.url}`)
+    next()
+}
 app.get('/', (req, res)=> {
     res.json({ msg: 'welcome to the user app 👋🏻' })
 })

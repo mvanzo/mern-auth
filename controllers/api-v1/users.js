@@ -3,6 +3,7 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const db = require('../../models')
+const requiresToken = require('../requiresToken')
 // const user = require('../../models/user')  ... I believe this was auto-imported, don't need it though
 
 // POST /users/register -- CREATE  a new user
@@ -52,27 +53,28 @@ router.post('/login', async (req, res)=> {
             email: req.body.email
         })
         // if the user is not found send -- return and send back a message that the user needs to sign up
-        if (!foundUser) res.json({ msg: 'user not found' })
+        if (!foundUser) return res.status(400).json({ msg: 'bad login credentials 😢' })
 
         // check the password from the req.body again and the password in the db
-        const checkPassword = await bcrypt.compareSync(req.body.password, foundUser.password)
+        const checkPassword = await bcrypt.compare(req.body.password, foundUser.password)
         
         // if the provided info doesn't match -- send back an error message and return
-        if (!checkPassword) res.json({ msg: 'passwords do not match' })
-    
+        if (!checkPassword) return res.status(400).json({ msg: 'bad login credentials 😢' })
+
         // create a jwt payload
         const payload = {
-            email: foundUser.email
+            name: foundUser.name,
+            email: foundUser.email,
+            id: foundUser.id
         }
     
         // sign the jwt
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 60*60 })
+        const token = await jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 60*60 })
         console.log(token)
     
         // send the jwt back
-        const decode = jwt.verify(token, process.env.JWT_SECRET)
-        res.send({token, decode})
-
+        const decode = await jwt.verify(token, process.env.JWT_SECRET)
+        res.json({token, decode})
     }
     catch (err) {
         console.log(err)
@@ -80,8 +82,10 @@ router.post('/login', async (req, res)=> {
 })
 
 // GET /users/auth-locked -- example of chekcing a jwt and not serving data unless the jwt is valid
-router.get('/auth-locked', (req, res)=> {
-    res.send('validate a token')
+router.get('/auth-locked', requiresToken, (req, res)=> {
+    // here we have access to the user on the res.locals
+    console.log('logged in user', res.locals.user)
+    res.json({ msg: 'welcome to the auth locked route' })
 })
 
 module.exports = router
